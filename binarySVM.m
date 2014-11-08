@@ -30,7 +30,7 @@ f2 = data2(:,6:end);    % features
 
 % Define our training data
 training_data = data1;
-T = length(training_data);
+T1 = length(training_data);
 
 % Define number of features / classes
 F = 10;     % number of features
@@ -40,46 +40,55 @@ for c = 1:C
     labels1(:,c) = ((l1 == classes(c)) - 0.5)*2;
 end
 
+% Select which class we're going to look at
+% Here, 4 = ground
+label = labels1(:,4);
+
 % Initialize weights for each class (each column is a different class)
-w1 = zeros(size(f1,2),C); % initialize weights
+w1 = zeros(size(f1,2),1); % initialize weights
 
 % Weight the margin violation
-lambda = 10;
+lambda = 1;
 
 %Iterate this many times through the training data
-for runs = 1:1
+for iter = 1:1
     % Iterate through training data
-    for t = 1:T
-        %Iterate through each class
-        for ci = 1:C
-            % Calculate the normal shrinkage term of the gradient
-            grad = lambda/T*w1(:,ci);
+    for t = 1:T1
+        % Calculate the normal shrinkage term of the gradient
+        grad = lambda/T1*w1;
 
-            % Iterate through all of the other classes to see if there are
-            % constraint violations
-            for cj = 1:C
-                % Skip if this is the same class
-                if (cj == ci) continue; end
-                
-                % Check if constraint is violated (need margin)
-                if labels1(t)*dot(w1(:,ci),f1(t,:)) < 1 % violation
-                    grad = grad - labels1(t,:)*f1(t,:)';
-                end 
-            end
-            
-            % Learning rate - make this better later
-            alpha = 1/t;
+        % Check if constraint is violated (need margin)
+        if label(t)*dot(w1,f1(t,:)) < 1 % violation
+            grad = grad - label(t)*f1(t,:)';
+        end 
 
-            % Take gradient descent step
-            w1(:,c) = w1(:,c) - alpha*grad;
-        end
+        % Learning rate - make this better later
+        alpha = 1/((iter - 1)*T1 + t);
+
+        % Take gradient descent step
+        w1 = w1 - alpha*grad;
     end
 end
+
+
 % Predict on test data
 
-% for t = 1:T
-%     %test the algorithm
-% end
+% Define our test data
+test_data = data2;
+T2 = length(test_data);
+
+pred_lab = zeros();
+
+error = 0;
+
+for t = 1:T2
+    pred_lab(t) = sign(dot(w1,f2(t,:)));
+    if pred_lab(t) ~= label(t)
+        error = error + 1;
+    end
+end
+
+error = error / T2;
 
 
 % Write data to a PCD file
