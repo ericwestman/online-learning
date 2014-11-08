@@ -35,9 +35,11 @@ T1 = length(training_data);
 % Define number of features / classes
 F = 10;     % number of features
 C = 5;      % number of classes
-labels1 = zeros(T,C);
+labels1 = zeros(T1,C);
+labels2 = zeros(T2,C);
 for c = 1:C
     labels1(:,c) = ((l1 == classes(c)) - 0.5)*2;
+    labels2(:,c) = ((l2 == classes(c)) - 0.5)*2;
 end
 
 % Select which class we're going to look at
@@ -71,16 +73,16 @@ for iter = 1:1
 end
 
 
-% Predict on test data
-
 % Define our test data
 test_data = data2;
 T2 = length(test_data);
 
+% Define the correct labels for the test data
+label = labels2(:,4);
 pred_lab = zeros();
-
 error = 0;
 
+% Predict on test data
 for t = 1:T2
     pred_lab(t) = sign(dot(w1,f2(t,:)));
     if pred_lab(t) ~= label(t)
@@ -88,7 +90,8 @@ for t = 1:T2
     end
 end
 
-error = error / T2;
+% Display the error of the test data
+error = error / T2
 
 
 % Write data to a PCD file
