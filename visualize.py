@@ -17,48 +17,62 @@ class VtkPointCloud:
         mapper.SetScalarVisibility(1)
         self.vtkActor = vtk.vtkActor()
         self.vtkActor.SetMapper(mapper)
+        # Setup the colors array
+        self.colors = vtk.vtkUnsignedCharArray()
+        self.colors.SetNumberOfComponents(3)
+        self.colors.SetName("colors")
+        
 
-    def addPoint(self, point):
+    def addPoint(self, point, color):
+        # Add the self.colors we created to the self.colors array
+        self.colors.InsertNextTupleValue(color)
+        # print self.colors
         if self.vtkPoints.GetNumberOfPoints() < self.maxNumPoints:
             pointId = self.vtkPoints.InsertNextPoint(point[:])
-            self.vtkDepth.InsertNextValue(point[2])
             self.vtkCells.InsertNextCell(1)
             self.vtkCells.InsertCellPoint(pointId)
+             
         else:
             r = random.randint(0, self.maxNumPoints)
             self.vtkPoints.SetPoint(r, point[:])
         self.vtkCells.Modified()
         self.vtkPoints.Modified()
-        self.vtkDepth.Modified()
 
     def clearPoints(self):
         self.vtkPoints = vtk.vtkPoints()
         self.vtkCells = vtk.vtkCellArray()
-        self.vtkDepth = vtk.vtkDoubleArray()
-        self.vtkDepth.SetName('DepthArray')
         self.vtkPolyData.SetPoints(self.vtkPoints)
         self.vtkPolyData.SetVerts(self.vtkCells)
-        self.vtkPolyData.GetPointData().SetScalars(self.vtkDepth)
-        self.vtkPolyData.GetPointData().SetActiveScalars('DepthArray')
-    
+        
     def readFile(self):
         self.points = []
+        r = [255, 0, 0]
+        g = [0, 255, 0]
+        y = [0, 255, 255]
+        w = [255, 255, 255]
+        p = [0, 0, 0]
+
+        colorCode = dict({1004: r, 1100: g, 1103: w, 1200: y, 1400: p})
+
         for i, line in enumerate((open(dataPath2, 'r'))):
             item = line.rstrip() # strip off newline and any other trailing whitespace
             if i>=4:
                 pos = [float(x) for x in item.split(" ")[0:3]]
+                color = int(item.split(" ")[4])
                 # self.points.append(pos)
-                pointCloud.addPoint(pos)
-
+                # print colorCode[color]
+                pointCloud.addPoint(pos, colorCode[color])
+        print self.colors
+        self.vtkPolyData.GetPointData().SetScalars(self.colors)
+            
 
 pointCloud = VtkPointCloud()
 pointCloud.readFile()
 
-
 # Renderer
 renderer = vtk.vtkRenderer()
 renderer.AddActor(pointCloud.vtkActor)
-renderer.SetBackground(.2, .3, .4)
+renderer.SetBackground(.1, .1, .1)
 renderer.ResetCamera()
 
 # Render Window
