@@ -51,7 +51,7 @@ end
 % Here, 4 = ground
 label = labels1(:,4);
 
-% Initialize weights for each class (each column is a different class)
+% Initialize weights 
 w1 = zeros(size(f1,2),1); % initialize weights
 
 % Weight the margin violation

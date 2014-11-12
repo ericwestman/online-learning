@@ -21,7 +21,7 @@ if strcmp(data_type, 'dummy')
     z1 = data1(:,3);        % z position
     i1 = data1(:,4);        % indices
     l1 = data1(:,5);        % labels
-    f1 = data1(:,1:3);    % features
+    f1 = data1(:,1:3);      % features
 
     % Second dataset
     x2 = data2(:,1);
@@ -30,6 +30,15 @@ if strcmp(data_type, 'dummy')
     i2 = data2(:,4);
     l2 = data2(:,5);
     f2 = data2(:,1:3);     
+    
+    % Normalize features
+    for i = 1:numel(x1)
+        f1(i,:) = f1(i,:)./norm(f1(i,:));
+    end
+    
+    for i = 1:numel(x2)
+        f2(i,:) = f2(i,:)./norm(f2(i,:));
+    end
     
 else
     data1 = dlmread('data/oakland_part3_am_rf.node_features','',3,0);
@@ -57,6 +66,16 @@ else
     i2 = data2(:,4);
     l2 = data2(:,5);
     f2 = data2(:,6:end);    
+    
+    % Normalize features
+%     for i = 1:numel(x1)
+%         f1(i,:) = f1(i,:)./norm(f1(i,:));
+%     end
+%     
+%     for i = 1:numel(x2)
+%         f2(i,:) = f2(i,:)./norm(f2(i,:));
+%     end
+    
 end
 
 %% Initialize multiclass SVM
@@ -68,9 +87,9 @@ f_training = f1;
 T1 = length(training_data);
 
 % Define our test data
-test_data = data1;
-l_test = l1;
-f_test = f1;
+test_data = data2;
+l_test = l2;
+f_test = f2;
 T2 = length(test_data);
 
 if strcmp(data_type, 'dummy')
@@ -117,8 +136,8 @@ if strcmp(method,'linear')
             other = find(labels1(t,:) == -1);
 
             %Iterate through all other classes
-            for i = numel(other)
-                nc = numel(i);
+            for i = 1:numel(other)
+                nc = other(i);
                 
                 % Calculate the normal shrinkage term of the gradient
                 grad = lambda/T1*w(:,c);
@@ -129,10 +148,10 @@ if strcmp(method,'linear')
                 end 
 
                 % Learning rate - make this better later
-                alpha = 1/((iter - 1)*T1 + t);
+                learning_rate = 1/((iter - 1)*T1 + t);
 
                 % Take gradient descent step
-                w(:,c) = w(:,c) - alpha*grad;
+                w(:,c) = w(:,c) - learning_rate*grad;
             end
         end
     end
@@ -190,38 +209,38 @@ error
 total_error
 
 %% Write data to a PCD file
-pcd = fopen('kernelizedSVM1.pcd','w');
-
-if (pcd < 0)
-    error('Could not open kernelizedSVM1.pcd');
-end
-
-fprintf(pcd,strcat('# .PCD v.7 - Point Cloud Data file format\n',...
-'VERSION .7\n',...
-'FIELDS x y z rgb\n',... % 'FIELDS x y z rgb\n',...
-'SIZE 4 4 4 4\n',... % 'SIZE 4 4 4 4\n',...
-'TYPE F F F F\n',...
-'COUNT 1 1 1 1\n',...
-strcat(sprintf('WIDTH %d',T2),'\n'),...
-'HEIGHT 1\n',...
-'VIEWPOINT 400 400 30 1 0 0 0\n',...
-strcat(sprintf('POINTS %d \n',T2),'\n'),...
-'DATA ascii\n'));
-
-for i = 1:T2
-%     fprintf(pcd, '%f %f %f\n', x1(i), y1(i), z1(i));
-
-    % Set the color for each class
-    if(pred_label(i) == 1)
-        color = 4.808e+06;
-    else
-        color = 4.2108e+06;
-    end
-    
-    fprintf(pcd, '%f %f %f %f \n', x1(i), y1(i), z1(i), color);
-end
-
-fclose(pcd);
+% pcd = fopen('kernelizedSVM1.pcd','w');
+% 
+% if (pcd < 0)
+%     error('Could not open kernelizedSVM1.pcd');
+% end
+% 
+% fprintf(pcd,strcat('# .PCD v.7 - Point Cloud Data file format\n',...
+% 'VERSION .7\n',...
+% 'FIELDS x y z rgb\n',... % 'FIELDS x y z rgb\n',...
+% 'SIZE 4 4 4 4\n',... % 'SIZE 4 4 4 4\n',...
+% 'TYPE F F F F\n',...
+% 'COUNT 1 1 1 1\n',...
+% strcat(sprintf('WIDTH %d',T2),'\n'),...
+% 'HEIGHT 1\n',...
+% 'VIEWPOINT 400 400 30 1 0 0 0\n',...
+% strcat(sprintf('POINTS %d \n',T2),'\n'),...
+% 'DATA ascii\n'));
+% 
+% for i = 1:T2
+% %     fprintf(pcd, '%f %f %f\n', x1(i), y1(i), z1(i));
+% 
+%     % Set the color for each class
+%     if(pred_label(i) == 1)
+%         color = 4.808e+06;
+%     else
+%         color = 4.2108e+06;
+%     end
+%     
+%     fprintf(pcd, '%f %f %f %f \n', x1(i), y1(i), z1(i), color);
+% end
+% 
+% fclose(pcd);
 
 
 
