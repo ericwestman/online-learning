@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+import sys
 import vtk
 from numpy import random
 
@@ -54,7 +56,7 @@ class VtkPointCloud:
 
         colorCode = dict({1004: r, 1100: g, 1103: w, 1200: y, 1400: p})
 
-        for i, line in enumerate((open(dataPath2, 'r'))):
+        for i, line in enumerate((open(filename, 'r'))):
             item = line.rstrip() # strip off newline and any other trailing whitespace
             if i>=4:
                 pos = [float(x) for x in item.split(" ")[0:3]]
@@ -65,6 +67,12 @@ class VtkPointCloud:
         print self.colors
         self.vtkPolyData.GetPointData().SetScalars(self.colors)
             
+
+if len(sys.argv) > 1:
+    filename = sys.argv[1]
+else:
+    filename = dataPath1
+
 
 pointCloud = VtkPointCloud()
 pointCloud.readFile()
