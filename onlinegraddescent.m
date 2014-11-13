@@ -203,6 +203,24 @@ error = error ./ total_classes';
 error*100
 total_error*100
 
+%% Write data to a file of the same format as the original
+file = fopen('data1OGD.pcd','w');
+
+if (file < 0)
+    error('Could not open file');
+end
+
+fprintf(file,strcat('#\n#\n#\n'));
+
+for i = 1:T2
+    % Set the color for each class
+    fprintf(file, '%f %f %f %d %d \n', x2(i), y2(i), z2(i), i, classes(pred_label(i)));
+end
+
+fclose(file);
+
+
+
 %% Write data to a PCD file
 % % % pcd = fopen('graddescent.pcd','w');
 % % % 

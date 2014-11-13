@@ -55,7 +55,7 @@ label = labels1(:,4);
 w1 = zeros(size(f1,2),1); % initialize weights
 
 % Weight the margin violation
-lambda = 1;
+lambda = 0.01;
 
 %Iterate this many times through the training data
 for iter = 1:1
@@ -70,7 +70,7 @@ for iter = 1:1
         end 
 
         % Learning rate - make this better later
-        alpha = 1/((iter - 1)*T1 + t);
+        alpha = 1/(sqrt(T1));
 
         % Take gradient descent step
         w1 = w1 - alpha*grad;

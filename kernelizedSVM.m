@@ -4,9 +4,9 @@
 clear all; close all;
 
 % Data1 will be our training data
-data2 = dlmread('data/oakland_part3_am_rf.node_features','',3,0);
+data1 = dlmread('data/oakland_part3_am_rf.node_features','',3,0);
 % Data2 will be our test data
-data1 = dlmread('data/oakland_part3_an_rf.node_features','',3,0);
+data2 = dlmread('data/oakland_part3_an_rf.node_features','',3,0);
 
 % Randomize the data
 data1=data1(randsample(1:length(data1),length(data1)),:);
@@ -55,11 +55,10 @@ end
 
 %% Initialize kernelized SVM
 
-% Only consider an equal number of data points from each class
 num_points1 = sum((labels1+1)/2);
 num_points2 = sum((labels2+1)/2);
 
-% Define training data
+% Downsample classes with less points
 % c_max = min(num_points1);
 % counts = zeros(1,C);
 % 
@@ -84,7 +83,7 @@ num_points2 = sum((labels2+1)/2);
 % l_training = l_training(rand_ind,:);
 % f_training = f_training(rand_ind,:);
 
-% Or copy points from less populated classes
+% Upsample the less populated classes
 copies = floor(max(num_points1)./num_points1);
 TR = copies*num_points1';
 indices = zeros(TR,1);
@@ -100,9 +99,9 @@ repopulated_ind = indices(rand_ind);
 
 l_training = labels1(repopulated_ind,:);
 f_training = f1(repopulated_ind,:);
-TR = TR / 2;
+TR = TR;
 
-% Or just ignore that and pass in all the data
+% % Or just ignore that and pass in all the data
 % l_training = labels1;
 % f_training = f1;
 % TR = T1;
@@ -117,8 +116,12 @@ f_test = f2;
 TE = length(l_test);
 
 
-% TR = TR / 10;
-% TE = TE / 10;
+%% Standardize the features
+f_training = f_training - repmat(mean(f_training),TR,1);
+f_training = f_training ./ repmat(std(f_training),TR,1);
+
+f_test = f_test - repmat(mean(f_test),TE,1);
+f_test = f_test ./ repmat(std(f_test),TE,1);
 
 %% Parameters for kernelized SVM
 
@@ -128,7 +131,7 @@ sigma = 1;
 kernel = @(x,x1) exp(-1*(norm(x - x1).^2)./(2*sigma^2));
 
 % Regularization weight
-lambda = 0.000001;
+lambda = 0.1;
 % Max number of kernels
 k_max = 70;
 
@@ -156,7 +159,7 @@ for iter = 1:1
             nc = other(i);
             
             % Check to if we've already seen enough examples of this
-            if negative_examples(nc) > num_points1(nc)
+            if negative_examples(nc) > num_points1(nc)*3
 %                 continue;
             end
 
@@ -172,8 +175,8 @@ for iter = 1:1
                 % Increment count of positive examples
                 positive_examples(c) = positive_examples(c) + 1;
                 
-                % Add a kernel at this feature vector in the wrong class
-                [~, nc_ind] = min(abs(alphas{c}));
+                % Add a kernel at this feature vector in the incorrect class
+                [~, nc_ind] = min(abs(alphas{nc}));
                 alphas{nc}(nc_ind) = -learning_rate;
                 xi{nc}(nc_ind,1:F) = f_training(t,:);
                 
@@ -223,7 +226,7 @@ error
 total_error
 
 %% Write data to a file of the same format as the original
-file = fopen('data1KSVM.pcd','w');
+file = fopen('data2KSVM.pcd','w');
 
 if (file < 0)
     error('Could not open file');
